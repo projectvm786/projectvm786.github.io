@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="wide wow-animation smoothscroll" lang="en">
+  <head>
+<style>
+    #myform1 {
+      background-color: #FFFFFF;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      width: 300px;
+      margin: 0 auto; /* Center the form horizontally */
+      /* You can also use margin: 0 auto; to center it horizontally and specify a top margin to center it vertically */
+    }
+
+  input[type="file"] {
+      margin: 10px 0;
+  }
+
+  #capture-button {
+      background-color: #FFD700; /* Yellow background for the button */
+      color: #FFFFFF; /* White text color for the button */
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-top: 15%;
+  }
+
+  #loading {
+      display: none;
+      color: #333; /* Dark text color */
+      margin-top: 10px;
+  }
+
+  h2 {
+      color: #FFFFFF; /* White text color */
+  }
+
+  audio {
+      width: 200px; /* Set the width to your desired size */
+      display: block; /* Make it a block element */
+      margin: 20px auto; /* Center the audio player horizontally */
+  }
+
+  #download-link {
+      display: none;
+      color: #FFD700; /* Yellow text color for the download link */
+      text-decoration: none;
+      margin-top: 10px;
+      font-weight: bold;
+  }
+
+  .language-toggle {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+  }
+
+  .language-toggle label {
+      margin: 0 10px;
+      cursor: pointer;
+  }
+</style>
+
+    <!-- Site Title-->
+    <title>Demo</title>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <!-- Stylesheets-->
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato:400,700,900,400italic%7CMerriweather:400,700,900,700italic">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="preloader">
+      <div class="page-loader-image"><img src="#" alt="" width="186" height="50"/>
+      </div>
+      <div class="page-loader-body">
+        <div class="cssload-preloader cssload-loading"><span class="cssload-slice"></span><span class="cssload-slice"></span><span class="cssload-slice"></span><span class="cssload-slice"></span><span class="cssload-slice"></span><span class="cssload-slice"></span></div>
+      </div>
+    </div>
+    <!-- Page-->
+    <div class="page">
+      <!-- Page Header-->
+      <header class="page-header">
+        <!-- RD Navbar-->
+        <div class="rd-navbar-wrap">
+          <nav class="rd-navbar" data-layout="rd-navbar-fixed" data-sm-layout="rd-navbar-fixed" data-sm-device-layout="rd-navbar-fixed" data-md-layout="rd-navbar-fullwidth" data-md-device-layout="rd-navbar-fixed" data-lg-device-layout="rd-navbar-fullwidth" data-lg-layout="rd-navbar-fullwidth" data-stick-up-clone="true" data-md-stick-up-offset="120px" data-lg-stick-up-offset="120px">
+            <div class="rd-navbar-inner">
+              <!-- RD Navbar Panel-->
+              <div class="rd-navbar-panel">
+                <button class="rd-navbar-toggle" data-rd-navbar-toggle=".rd-navbar-nav-wrap"><span></span></button>
+                <!-- RD Navbar Brand-->
+                <div class="rd-navbar-brand"><a class="brand-name" href="index.html"><img src="#" alt="" width="186" height="50"/></a></div>
+              </div>
+            
+              <!-- RD Navbar Aside-->
+              <div class="rd-navbar-aside">
+                <div class="rd-navbar-aside-toggle" data-rd-navbar-toggle=".rd-navbar-aside"><span></span></div>
+                <div class="rd-navbar-aside-content"><a class="button button-sm button-gray-light-outline button-effect-ujarak" href="#">Donate</a></div>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <h3 style="text-align: center;">Image Capture Form</h1>
+    <form action="http://127.0.0.1:8000/proxyserver/" method="post" enctype="multipart/form-data" id="myform1">
+        {% csrf_token %}
+        <input type="file" name="image" accept="image/*" capture="environment">
+        <div class="language-toggle">
+            <label for="language-urdu">Urdu</label>
+            <input type="radio" id="language-urdu" name="language" value="Urdu">
+            <label for="language-english">English</label>
+            <input type="radio" id="language-english" name="language" value="English" checked>
+        </div>
+        <button type="submit" id="capture-button">Capture and Send</button>
+    </form>
+
+    <div id="loading">
+        <p>Loading...</p>
+    </div>
+
+    <h4 style="text-align: center;">Received MP3</h2>
+    <audio controls id="audio-player">
+        <!-- Set the source of the audio element to the received MP3 file -->
+        <source src="" type="audio/mpeg">
+    </audio>
+
+    <a id="download-link" download="output.mp3">Download MP3</a>
+
+    <script>
+        const audioPlayer = document.getElementById("audio-player");
+        const downloadLink = document.getElementById("download-link");
+        const loadingIndicator = document.getElementById("loading");
+        const form = document.querySelector("form");
+        const captureButton = document.getElementById("capture-button");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            // Disable the capture button and show the loading indicator
+            captureButton.disabled = true;
+            loadingIndicator.style.display = "block";
+
+            // Submit the form and handle the response
+            fetch(this.action, {
+                method: this.method,
+                body: new FormData(this),
+            })
+                .then(response => response.blob())
+                .then(blob => {
+                    const objectUrl = URL.createObjectURL(blob);
+                    audioPlayer.src = objectUrl;
+                    downloadLink.style.display = "block";
+                    downloadLink.href = objectUrl;
+
+                    // Hide the loading indicator
+                    loadingIndicator.style.display = "none";
+
+                    // Reset the button to be clickable again
+                    captureButton.disabled = false;
+                })
+                .catch(error => {
+                    console.error(error);
+
+                    // Hide the loading indicator and re-enable the capture button
+                    loadingIndicator.style.display = "none";
+                    captureButton.disabled = false;
+                });
+        });
+    </script>
+
+
+
+
+
+
+      
+      <footer class="page-footer-default bg-gray-dark text-center">
+        <div class="container">
+          <div class="row row-30 align-items-sm-center flex-md-row-reverse row-15">
+            <div class="col-md-6 column-center text-md-right">
+              <div class="unit justify-content-center justify-content-md-end align-items-center">
+                <div class="unit-left">
+                  <p class="font-weight-bold">Follow Us:</p>
+                </div>
+                <div class="unit-body">
+                  <ul class="list-inline-xs">
+                    <li><a class="icon icon-md icon-default fa fa-facebook-square" href="#"></a></li>
+                    <li><a class="icon icon-md icon-default fa fa-instagram" href="#"></a></li>
+                    <li><a class="icon icon-md icon-default fa fa-twitter-square" href="#"></a></li>
+                    <li><a class="icon icon-md icon-default fa fa-pinterest-square" href="#"></a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 column-center text-md-left">
+          
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <!-- Global Mailform Output-->
+    <div class="snackbars" id="form-output-global"></div>
+    <!-- Javascript-->
+    <script src="js/core.min.js"></script>
+    <script src="js/script.js"></script>
+  </body>
+</html>
